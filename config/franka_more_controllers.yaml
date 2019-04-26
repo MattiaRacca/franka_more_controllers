@@ -1,0 +1,16 @@
+cartesian_velocity_ee_controller:
+    type: franka_example_controllers/CartesianVelocityEEController
+    arm_id: panda
+
+cartesian_impedance_direction_controller:
+    type: franka_more_controllers/CartesianImpedanceDirectionController
+    arm_id: panda
+    joint_names:
+        - panda_joint1
+        - panda_joint2
+        - panda_joint3
+        - panda_joint4
+        - panda_joint5
+        - panda_joint6
+        - panda_joint7
+
