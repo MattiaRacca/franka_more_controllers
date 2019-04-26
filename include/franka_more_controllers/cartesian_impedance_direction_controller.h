@@ -16,6 +16,7 @@
 #include <Eigen/Dense>
 
 #include <franka_more_controllers/compliance_paramConfig.h>
+#include <franka_more_controllers/motion_direction_paramConfig.h>
 #include <franka_hw/franka_model_interface.h>
 #include <franka_hw/franka_state_interface.h>
 
@@ -54,16 +55,24 @@ class CartesianImpedanceDirectionController : public controller_interface::Multi
   Eigen::Vector3d position_d_target_;
   Eigen::Quaterniond orientation_d_target_;
 
-  // Dynamic reconfigure
+  Eigen::Vector3d motion_direction_;
+  Eigen::Vector3d motion_direction_target_;
+  double speed_;
+  double speed_target_;
+
+  // TODO: maybe merge the param in a single one?
+  // Dynamic reconfigure for compliance
   std::unique_ptr<dynamic_reconfigure::Server<franka_more_controllers::compliance_paramConfig>>
       dynamic_server_compliance_param_;
   ros::NodeHandle dynamic_reconfigure_compliance_param_node_;
   void complianceParamCallback(franka_more_controllers::compliance_paramConfig& config,
                                uint32_t level);
-
-  // Equilibrium pose subscriber
-  ros::Subscriber sub_equilibrium_pose_;
-  void equilibriumPoseCallback(const geometry_msgs::PoseStampedConstPtr& msg);
+  // Dynamic reconfigure for the motion direction
+  std::unique_ptr<dynamic_reconfigure::Server<franka_more_controllers::motion_direction_paramConfig>>
+          dynamic_server_motion_direction_param_;
+  ros::NodeHandle dynamic_reconfigure_motion_direction_param_node_;
+  void motionDirectionParamCallback(franka_more_controllers::motion_direction_paramConfig& config,
+                               uint32_t level);
 };
 
 }  // namespace franka_more_controllers

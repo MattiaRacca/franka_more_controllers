@@ -19,10 +19,6 @@ bool CartesianImpedanceDirectionController::init(hardware_interface::RobotHW* ro
   std::vector<double> cartesian_stiffness_vector;
   std::vector<double> cartesian_damping_vector;
 
-  sub_equilibrium_pose_ = node_handle.subscribe(
-      "/equilibrium_pose", 20, &CartesianImpedanceDirectionController::equilibriumPoseCallback, this,
-      ros::TransportHints().reliable().tcpNoDelay());
-
   std::string arm_id;
   if (!node_handle.getParam("arm_id", arm_id)) {
     ROS_ERROR_STREAM("CartesianImpedanceDirectionController: Could not read parameter arm_id");
@@ -89,10 +85,20 @@ bool CartesianImpedanceDirectionController::init(hardware_interface::RobotHW* ro
 
   dynamic_server_compliance_param_ = std::make_unique<
       dynamic_reconfigure::Server<franka_more_controllers::compliance_paramConfig>>(
-
       dynamic_reconfigure_compliance_param_node_);
+
   dynamic_server_compliance_param_->setCallback(
       boost::bind(&CartesianImpedanceDirectionController::complianceParamCallback, this, _1, _2));
+
+  dynamic_reconfigure_motion_direction_param_node_ =
+          ros::NodeHandle("dynamic_reconfigure_motion_direction_param_node");
+
+  dynamic_server_motion_direction_param_ = std::make_unique<
+      dynamic_reconfigure::Server<franka_more_controllers::motion_direction_paramConfig>>(
+      dynamic_reconfigure_motion_direction_param_node_);
+
+  dynamic_server_motion_direction_param_->setCallback(
+          boost::bind(&CartesianImpedanceDirectionController::motionDirectionParamCallback, this, _1, _2));
 
   position_d_.setZero();
   orientation_d_.coeffs() << 0.0, 0.0, 0.0, 1.0;
@@ -147,12 +153,13 @@ void CartesianImpedanceDirectionController::update(const ros::Time& /*time*/,
   Eigen::Vector3d position(transform.translation());
   Eigen::Quaterniond orientation(transform.linear());
 
-  // add velocity component to the desired position
-  Eigen::Matrix<double, 3, 1> velocity_in_EE, velocity_in_O;
-  velocity_in_EE << 0.0, 0.0, 0.01;
+  // compute motion in robot frame from EE frame
+  Eigen::Vector3d motion_direction_in_0;
+  motion_direction_in_0 = transform.linear() * motion_direction_;
+  motion_direction_in_0 *= speed_;
 
-  velocity_in_O = transform.linear() * velocity_in_EE;
-  position_d_ += velocity_in_O*period.toSec();
+  // add velocity component to the desired position
+  position_d_ += motion_direction_in_0*period.toSec();
 
   // compute error to desired pose
   // position error
@@ -204,16 +211,9 @@ void CartesianImpedanceDirectionController::update(const ros::Time& /*time*/,
       filter_params_ * cartesian_damping_target_ + (1.0 - filter_params_) * cartesian_damping_;
   nullspace_stiffness_ =
       filter_params_ * nullspace_stiffness_target_ + (1.0 - filter_params_) * nullspace_stiffness_;
-  /*
-  position_d_ = filter_params_ * position_d_target_ + (1.0 - filter_params_) * position_d_;
-  Eigen::AngleAxisd aa_orientation_d(orientation_d_);
-  Eigen::AngleAxisd aa_orientation_d_target(orientation_d_target_);
-  aa_orientation_d.axis() = filter_params_ * aa_orientation_d_target.axis() +
-                            (1.0 - filter_params_) * aa_orientation_d.axis();
-  aa_orientation_d.angle() = filter_params_ * aa_orientation_d_target.angle() +
-                             (1.0 - filter_params_) * aa_orientation_d.angle();
-  orientation_d_ = Eigen::Quaterniond(aa_orientation_d);
-  */
+
+  motion_direction_ = filter_params_ * motion_direction_target_ + (1.0 - filter_params_) * motion_direction_;
+  speed_ = filter_params_ * speed_target_ + (1.0 - filter_params_) * speed_;
 }
 
 Eigen::Matrix<double, 7, 1> CartesianImpedanceDirectionController::saturateTorqueRate(
@@ -245,15 +245,17 @@ void CartesianImpedanceDirectionController::complianceParamCallback(
   nullspace_stiffness_target_ = config.nullspace_stiffness;
 }
 
-void CartesianImpedanceDirectionController::equilibriumPoseCallback(
-    const geometry_msgs::PoseStampedConstPtr& msg) {
-  position_d_target_ << msg->pose.position.x, msg->pose.position.y, msg->pose.position.z;
-  Eigen::Quaterniond last_orientation_d_target(orientation_d_target_);
-  orientation_d_target_.coeffs() << msg->pose.orientation.x, msg->pose.orientation.y,
-      msg->pose.orientation.z, msg->pose.orientation.w;
-  if (last_orientation_d_target.coeffs().dot(orientation_d_target_.coeffs()) < 0.0) {
-    orientation_d_target_.coeffs() << -orientation_d_target_.coeffs();
+void CartesianImpedanceDirectionController::motionDirectionParamCallback(
+        franka_more_controllers::motion_direction_paramConfig &config,
+        uint32_t /*level*/) {
+  motion_direction_target_.setZero();
+  motion_direction_target_ << config.vx_d, config.vy_d, config.vz_d;
+
+  if (motion_direction_target_.norm() > 1) {
+    motion_direction_target_.normalize();
   }
+
+  speed_target_ = config.speed;
 }
 
 }  // namespace franka_more_controllers

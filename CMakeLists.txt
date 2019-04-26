@@ -25,7 +25,7 @@ find_package(Franka 0.5.0 REQUIRED)
 
 generate_dynamic_reconfigure_options(
   cfg/compliance_param.cfg
-  cfg/desired_mass_param.cfg
+  cfg/motion_direction_param.cfg
 )
 
 catkin_package(
