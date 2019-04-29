@@ -15,8 +15,7 @@
 #include <ros/time.h>
 #include <Eigen/Dense>
 
-#include <franka_more_controllers/compliance_paramConfig.h>
-#include <franka_more_controllers/motion_direction_paramConfig.h>
+#include <franka_more_controllers/cartesian_impedance_direction_paramConfig.h>
 #include <franka_hw/franka_model_interface.h>
 #include <franka_hw/franka_state_interface.h>
 
@@ -60,19 +59,13 @@ class CartesianImpedanceDirectionController : public controller_interface::Multi
   double speed_;
   double speed_target_;
 
-  // TODO: maybe merge the param in a single one?
-  // Dynamic reconfigure for compliance
-  std::unique_ptr<dynamic_reconfigure::Server<franka_more_controllers::compliance_paramConfig>>
-      dynamic_server_compliance_param_;
-  ros::NodeHandle dynamic_reconfigure_compliance_param_node_;
-  void complianceParamCallback(franka_more_controllers::compliance_paramConfig& config,
-                               uint32_t level);
-  // Dynamic reconfigure for the motion direction
-  std::unique_ptr<dynamic_reconfigure::Server<franka_more_controllers::motion_direction_paramConfig>>
-          dynamic_server_motion_direction_param_;
-  ros::NodeHandle dynamic_reconfigure_motion_direction_param_node_;
-  void motionDirectionParamCallback(franka_more_controllers::motion_direction_paramConfig& config,
-                               uint32_t level);
+  // Dynamic reconfigure
+  std::unique_ptr<dynamic_reconfigure::Server<
+  franka_more_controllers::cartesian_impedance_direction_paramConfig>>dynamic_server_cartesian_impedance_direction_param_;
+  ros::NodeHandle dynamic_reconfigure_cartesian_impedance_direction_param_node_;
+  void cartesianImpedanceDirectionParamCallback(
+          franka_more_controllers::cartesian_impedance_direction_paramConfig& config,
+          uint32_t level);
 };
 
 }  // namespace franka_more_controllers

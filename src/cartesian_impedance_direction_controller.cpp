@@ -80,30 +80,25 @@ bool CartesianImpedanceDirectionController::init(hardware_interface::RobotHW* ro
     }
   }
 
-  dynamic_reconfigure_compliance_param_node_ =
-      ros::NodeHandle("dynamic_reconfigure_compliance_param_node");
+  dynamic_reconfigure_cartesian_impedance_direction_param_node_ =
+          ros::NodeHandle("dynamic_reconfigure_cartesian_impedance_direction_param_node");
 
-  dynamic_server_compliance_param_ = std::make_unique<
-      dynamic_reconfigure::Server<franka_more_controllers::compliance_paramConfig>>(
-      dynamic_reconfigure_compliance_param_node_);
+  dynamic_server_cartesian_impedance_direction_param_ = std::make_unique<
+      dynamic_reconfigure::Server<franka_more_controllers::cartesian_impedance_direction_paramConfig>>(
+      dynamic_reconfigure_cartesian_impedance_direction_param_node_);
 
-  dynamic_server_compliance_param_->setCallback(
-      boost::bind(&CartesianImpedanceDirectionController::complianceParamCallback, this, _1, _2));
-
-  dynamic_reconfigure_motion_direction_param_node_ =
-          ros::NodeHandle("dynamic_reconfigure_motion_direction_param_node");
-
-  dynamic_server_motion_direction_param_ = std::make_unique<
-      dynamic_reconfigure::Server<franka_more_controllers::motion_direction_paramConfig>>(
-      dynamic_reconfigure_motion_direction_param_node_);
-
-  dynamic_server_motion_direction_param_->setCallback(
-          boost::bind(&CartesianImpedanceDirectionController::motionDirectionParamCallback, this, _1, _2));
+  dynamic_server_cartesian_impedance_direction_param_->setCallback(
+          boost::bind(&CartesianImpedanceDirectionController::cartesianImpedanceDirectionParamCallback, this, _1, _2));
 
   position_d_.setZero();
   orientation_d_.coeffs() << 0.0, 0.0, 0.0, 1.0;
   position_d_target_.setZero();
   orientation_d_target_.coeffs() << 0.0, 0.0, 0.0, 1.0;
+
+  motion_direction_.setZero();
+  motion_direction_target_.setZero();
+  speed_ = 0.0;
+  speed_target_ = 0.0;
 
   cartesian_stiffness_.setZero();
   cartesian_damping_.setZero();
@@ -228,26 +223,21 @@ Eigen::Matrix<double, 7, 1> CartesianImpedanceDirectionController::saturateTorqu
   return tau_d_saturated;
 }
 
-void CartesianImpedanceDirectionController::complianceParamCallback(
-    franka_more_controllers::compliance_paramConfig& config,
-    uint32_t /*level*/) {
+void CartesianImpedanceDirectionController::cartesianImpedanceDirectionParamCallback(
+        franka_more_controllers::cartesian_impedance_direction_paramConfig &config,
+        uint32_t /*level*/) {
   cartesian_stiffness_target_.setIdentity();
   cartesian_stiffness_target_.topLeftCorner(3, 3)
-      << config.translational_stiffness * Eigen::Matrix3d::Identity();
+          << config.translational_stiffness * Eigen::Matrix3d::Identity();
   cartesian_stiffness_target_.bottomRightCorner(3, 3)
-      << config.rotational_stiffness * Eigen::Matrix3d::Identity();
+          << config.rotational_stiffness * Eigen::Matrix3d::Identity();
   cartesian_damping_target_.setIdentity();
   // Damping ratio = 1
   cartesian_damping_target_.topLeftCorner(3, 3)
-      << 2.0 * sqrt(config.translational_stiffness) * Eigen::Matrix3d::Identity();
+          << 2.0 * sqrt(config.translational_stiffness) * Eigen::Matrix3d::Identity();
   cartesian_damping_target_.bottomRightCorner(3, 3)
-      << 2.0 * sqrt(config.rotational_stiffness) * Eigen::Matrix3d::Identity();
+          << 2.0 * sqrt(config.rotational_stiffness) * Eigen::Matrix3d::Identity();
   nullspace_stiffness_target_ = config.nullspace_stiffness;
-}
-
-void CartesianImpedanceDirectionController::motionDirectionParamCallback(
-        franka_more_controllers::motion_direction_paramConfig &config,
-        uint32_t /*level*/) {
   motion_direction_target_.setZero();
   motion_direction_target_ << config.vx_d, config.vy_d, config.vz_d;
 
