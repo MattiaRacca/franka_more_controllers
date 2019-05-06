@@ -45,6 +45,7 @@ catkin_package(
 add_library(franka_more_controllers
   src/cartesian_velocity_ee_controller.cpp
   src/cartesian_impedance_direction_controller.cpp
+  src/cartesian_impedance_trajectory_controller.cpp
 )
 
 add_dependencies(franka_more_controllers
