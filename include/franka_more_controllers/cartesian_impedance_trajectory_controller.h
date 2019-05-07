@@ -44,22 +44,23 @@ class CartesianImpedanceTrajectoryController : public controller_interface::Mult
   double nullspace_stiffness_{20.0};
   double nullspace_stiffness_target_{20.0};
   const double delta_tau_max_{1.0};
+
   Eigen::Matrix<double, 6, 6> cartesian_stiffness_;
   Eigen::Matrix<double, 6, 6> cartesian_stiffness_target_;
   Eigen::Matrix<double, 6, 6> cartesian_damping_;
   Eigen::Matrix<double, 6, 6> cartesian_damping_target_;
   Eigen::Matrix<double, 7, 1> q_d_nullspace_;
+
   Eigen::Vector3d position_d_;
-  Eigen::Quaterniond orientation_d_;
+  Eigen::Vector3d starting_position_;
   Eigen::Vector3d position_d_target_;
+
+  Eigen::Quaterniond orientation_d_;
+  Eigen::Quaterniond starting_orientation_;
   Eigen::Quaterniond orientation_d_target_;
 
-  Eigen::Vector3d motion_vector_;
-  double speed_;
-  double speed_target_;
-  double distance_to_cover_;
-  double rotation_speed_;
-  double rotation_speed_target_;
+  double desired_time_;
+  double progression_;
 
   // Dynamic reconfigure
   std::unique_ptr<dynamic_reconfigure::Server<
