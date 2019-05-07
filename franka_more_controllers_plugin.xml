@@ -1,5 +1,5 @@
 <library path="lib/libfranka_more_controllers">
-  <class name="franka_more_controllers/CartesianImpedanceDirectionController" type="franka_more_controllers::CartesianImpedanceDirectionController" base_class_type="controller_interface::ControllerBase">
+  <class name="franka_more_controllers/CartesianImpedanceTrajectoryController" type="franka_more_controllers::CartesianImpedanceTrajectoryController" base_class_type="controller_interface::ControllerBase">
     <description>
       A controller that renders a spring damper system in cartesian space, moving in a certain direction in EE frame with a certain speed.
     </description>

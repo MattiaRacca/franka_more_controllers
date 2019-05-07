@@ -19,6 +19,10 @@ bool CartesianImpedanceTrajectoryController::init(hardware_interface::RobotHW* r
   std::vector<double> cartesian_stiffness_vector;
   std::vector<double> cartesian_damping_vector;
 
+  sub_target_pose_ = node_handle.subscribe(
+          "/target_pose", 20, &CartesianImpedanceTrajectoryController::targetPoseCallback, this,
+          ros::TransportHints().reliable().tcpNoDelay());
+
   std::string arm_id;
   if (!node_handle.getParam("arm_id", arm_id)) {
     ROS_ERROR_STREAM("CartesianImpedanceTrajectoryController: Could not read parameter arm_id");
