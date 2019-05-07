@@ -20,6 +20,8 @@
   <depend>franka_hw</depend>
   <depend>std_msgs</depend>
   <depend>geometry_msgs</depend>
+  <build_depend>message_generation</build_depend>
+  <build_depend>actionlib_msgs</build_depend>
   <depend>hardware_interface</depend>
   <depend>libfranka</depend>
   <depend>pluginlib</depend>
@@ -29,6 +31,7 @@
   <exec_depend>franka_control</exec_depend>
   <exec_depend>franka_description</exec_depend>
   <exec_depend>message_runtime</exec_depend>
+  <exec_depend>message_generation</exec_depend>
   <exec_depend>panda_moveit_config</exec_depend>
   <exec_depend>rospy</exec_depend>
 

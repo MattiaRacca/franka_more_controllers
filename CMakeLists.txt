@@ -14,6 +14,7 @@ find_package(catkin REQUIRED COMPONENTS
   geometry_msgs
   hardware_interface
   message_generation
+  actionlib_msgs
   pluginlib
   realtime_tools
   roscpp
@@ -25,6 +26,18 @@ find_package(Franka 0.5.0 REQUIRED)
 
 generate_dynamic_reconfigure_options(
   cfg/cartesian_impedance_direction_param.cfg
+)
+
+add_action_files(
+        DIRECTORY action
+        FILES LinearMotion.action
+)
+
+generate_messages(
+        DEPENDENCIES
+        actionlib_msgs
+        std_msgs
+        geometry_msgs
 )
 
 catkin_package(

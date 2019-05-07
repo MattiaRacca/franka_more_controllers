@@ -14,10 +14,13 @@
 #include <ros/node_handle.h>
 #include <ros/time.h>
 #include <Eigen/Dense>
+#include <actionlib/server/simple_action_server.h>
 
 #include <franka_hw/franka_model_interface.h>
 #include <franka_example_controllers/compliance_paramConfig.h>
 #include <franka_hw/franka_state_interface.h>
+
+#include "franka_more_controllers/LinearMotionAction.h"
 
 namespace franka_more_controllers {
 
@@ -62,6 +65,9 @@ class CartesianImpedanceTrajectoryController : public controller_interface::Mult
   double desired_time_;
   double progression_;
 
+  franka_more_controllers::LinearMotionFeedback move_to_ee_feedback_;
+  franka_more_controllers::LinearMotionResult move_to_ee_result_;
+
   // Dynamic reconfigure
   std::unique_ptr<dynamic_reconfigure::Server<
   franka_example_controllers::compliance_paramConfig>>dynamic_server_cartesian_impedance_trajectory_param_;
@@ -71,8 +77,10 @@ class CartesianImpedanceTrajectoryController : public controller_interface::Mult
           uint32_t level);
 
   // Target Pose subscriber
-  ros::Subscriber sub_target_pose_;
+  // ros::Subscriber sub_target_pose_;
   void targetPoseCallback(const geometry_msgs::PoseStampedConstPtr& msg);
+  actionlib::SimpleActionServer<franka_more_controllers::LinearMotionAction> *move_to_ee_server_;
+  void moveToEECallback(const franka_more_controllers::LinearMotionGoalConstPtr &goal);
 };
 
 }  // namespace franka_more_controllers

@@ -19,9 +19,15 @@ bool CartesianImpedanceTrajectoryController::init(hardware_interface::RobotHW* r
   std::vector<double> cartesian_stiffness_vector;
   std::vector<double> cartesian_damping_vector;
 
+  /*
   sub_target_pose_ = node_handle.subscribe(
           "/target_pose", 20, &CartesianImpedanceTrajectoryController::targetPoseCallback, this,
           ros::TransportHints().reliable().tcpNoDelay());
+  */
+
+  move_to_ee_server_ = new actionlib::SimpleActionServer<franka_more_controllers::LinearMotionAction>(
+          node_handle, "move_to_ee_server",boost::bind(&CartesianImpedanceTrajectoryController::moveToEECallback, this, _1), false);
+  move_to_ee_server_->start();
 
   std::string arm_id;
   if (!node_handle.getParam("arm_id", arm_id)) {
@@ -288,6 +294,56 @@ void CartesianImpedanceTrajectoryController::targetPoseCallback(const geometry_m
   desired_time_ = std::max(rotation_difference_angle_axis.angle()/rotation_speed_target,
           position_difference.norm()/position_speed_target);
   progression_ = 0.0;
+}
+
+void CartesianImpedanceTrajectoryController::moveToEECallback(const franka_more_controllers::LinearMotionGoalConstPtr &goal){
+  position_d_target_ << goal->pose.pose.position.x, goal->pose.pose.position.y, goal->pose.pose.position.z;
+  Eigen::Quaterniond last_orientation_d_target(orientation_d_target_);
+  orientation_d_target_.coeffs() << goal->pose.pose.orientation.x, goal->pose.pose.orientation.y,
+          goal->pose.pose.orientation.z, goal->pose.pose.orientation.w;
+  if (last_orientation_d_target.coeffs().dot(orientation_d_target_.coeffs()) < 0.0) {
+    orientation_d_target_.coeffs() << -orientation_d_target_.coeffs();
+  }
+
+  double position_speed_target = goal->position_speed; // m/s
+  double rotation_speed_target = goal->rotation_speed; // rad/s
+
+  // Save current position as starting
+  starting_position_ = position_d_;
+
+  // Save current orientation as starting
+  starting_orientation_ = orientation_d_;
+
+  // Compute "pace" of motion
+  Eigen::Vector3d position_difference = position_d_target_ - position_d_;
+  Eigen::Quaterniond rotation_difference(orientation_d_ * last_orientation_d_target.inverse());
+  // convert to axis angle
+  Eigen::AngleAxisd rotation_difference_angle_axis(rotation_difference);
+
+  desired_time_ = std::max(rotation_difference_angle_axis.angle()/rotation_speed_target,
+                           position_difference.norm()/position_speed_target);
+  progression_ = 0.0;
+
+  bool motion_done = false;
+  while(!motion_done)
+  {
+    if(progression_ < 1.0){
+      move_to_ee_feedback_.progression = progression_;
+      move_to_ee_server_->publishFeedback(move_to_ee_feedback_);
+    } else {
+      motion_done = true;
+    }
+  }
+
+  move_to_ee_result_.final_pose.pose.position.x = position_d_[0];
+  move_to_ee_result_.final_pose.pose.position.y = position_d_[1];
+  move_to_ee_result_.final_pose.pose.position.z = position_d_[2];
+  move_to_ee_result_.final_pose.pose.orientation.x = orientation_d_.x();
+  move_to_ee_result_.final_pose.pose.orientation.y = orientation_d_.y();
+  move_to_ee_result_.final_pose.pose.orientation.z = orientation_d_.z();
+  move_to_ee_result_.final_pose.pose.orientation.w = orientation_d_.w();
+
+  move_to_ee_server_->setSucceeded(move_to_ee_result_);
 }
 
 }  // namespace franka_more_controllers
