@@ -327,7 +327,8 @@ void CartesianImpedanceTrajectoryController::moveToEECallback(const franka_more_
   bool motion_done = false;
   while(!motion_done)
   {
-    if(progression_ < 1.0){
+    double tau = progression_/desired_time_;
+    if(tau < 1.0){
       move_to_ee_feedback_.progression = progression_;
       move_to_ee_server_->publishFeedback(move_to_ee_feedback_);
     } else {
