@@ -266,7 +266,8 @@ void CartesianImpedanceTrajectoryController::targetPoseCallback(const geometry_m
     orientation_d_target_.coeffs() << -orientation_d_target_.coeffs();
   }
   // TODO: speed has to be set by the user
-  double speed_target = 0.01;
+  double position_speed_target = 0.01; // m/s
+  double rotation_speed_target = 0.5; // rad/s
 
   // Save current position as starting
   starting_position_ = position_d_;
@@ -275,9 +276,13 @@ void CartesianImpedanceTrajectoryController::targetPoseCallback(const geometry_m
   starting_orientation_ = orientation_d_;
 
   // Compute "pace" of motion
-  Eigen::Vector3d motion_vector = position_d_target_ - position_d_;
+  Eigen::Vector3d position_difference = position_d_target_ - position_d_;
+  Eigen::Quaterniond rotation_difference(orientation_d_ * last_orientation_d_target.inverse());
+  // convert to axis angle
+  Eigen::AngleAxisd rotation_difference_angle_axis(rotation_difference);
 
-  desired_time_ = motion_vector.norm()/speed_target;
+  desired_time_ = std::max(rotation_difference_angle_axis.angle()/rotation_speed_target,
+          position_difference.norm()/position_speed_target);
   progression_ = 0.0;
 }
 
