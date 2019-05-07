@@ -3,7 +3,6 @@
 geometry_msgs/PoseStamped pose
 float64 position_speed
 float64 rotation_speed
-float64 force_threshold
 ---
 ## Result definition
 # TODO

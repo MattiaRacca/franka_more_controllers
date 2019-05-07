@@ -25,6 +25,7 @@ bool CartesianImpedanceTrajectoryController::init(hardware_interface::RobotHW* r
           ros::TransportHints().reliable().tcpNoDelay());
   */
 
+  // TODO: consider better naming here of the action?
   move_to_ee_server_ = new actionlib::SimpleActionServer<franka_more_controllers::LinearMotionAction>(
           node_handle, "move_to_ee_server",boost::bind(&CartesianImpedanceTrajectoryController::moveToEECallback, this, _1), false);
   move_to_ee_server_->start();
