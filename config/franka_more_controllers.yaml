@@ -1,7 +1,3 @@
-cartesian_velocity_ee_controller:
-    type: franka_example_controllers/CartesianVelocityEEController
-    arm_id: panda
-
 cartesian_impedance_direction_controller:
     type: franka_more_controllers/CartesianImpedanceDirectionController
     arm_id: panda

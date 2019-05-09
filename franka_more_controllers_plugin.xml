@@ -9,9 +9,4 @@
       A controller that renders a spring damper system in cartesian space, moving along a line to reach a pose with a certain speed.
     </description>
   </class>
-  <class name="franka_more_controllers/CartesianVelocityEEController" type="franka_more_controllers::CartesianVelocityEEController" base_class_type="controller_interface::ControllerBase">
-    <description>
-      A test of cartesian velocity controller, it DOES NOT WORK.
-    </description>
-  </class>
 </library>
